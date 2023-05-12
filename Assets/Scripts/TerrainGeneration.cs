@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor.Callbacks;
 using UnityEngine;
 
 public class TerrainGeneration : MonoBehaviour
@@ -100,6 +99,8 @@ public class TerrainGeneration : MonoBehaviour
         position.z++;
 
         generatedTerrains.Add(terrain);
+
+        // destroy extra terrain
         if (generatedTerrains.Count > maxTerrainCount)
         {
             GameObject.Destroy(generatedTerrains[0]);

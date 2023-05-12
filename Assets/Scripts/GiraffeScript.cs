@@ -6,6 +6,8 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SocialPlatforms.Impl;
 using UnityEngine.UI;
+using TMPro;
+using UnityEditor;
 
 public class GiraffeScript : MonoBehaviour
 {
@@ -14,25 +16,34 @@ public class GiraffeScript : MonoBehaviour
     public float jumpForce = 5;
     public float gravityModifier;
     private float startTextX;
+    private float highScoreTextX;
     private float startTextSpeedUp = 0.0001f;
+    public float highScore = SaveHighScore.highScore;
 
     public bool gameOver = false;
     public bool onGround = true;
     public bool firstMove = false;
+    public bool hasPowerup;
 
-    private int Score;
+    public int Score;
 
     public GameObject startText;
+    public GameObject highScoreText;
+    public List<TextMeshPro> highScoreTexts = new List<TextMeshPro>();
     public GameObject keyboard;
     public GameObject canvas;
-    public Text scoreText;
-    public Text finalScore;
+    public TextMeshProUGUI scoreText;
+    public TextMeshProUGUI finalScore;
     public AudioSource playerAudio;
     public AudioClip jumpSound;
     public AudioClip carDeathSound;
     public AudioClip waterDeathSound;
     public ParticleSystem waterSplash;
     private Rigidbody playerRb;
+    private MeshCollider playerMesh;
+    public Material giraffeMaterial;
+
+    
 
     // Start is called before the first frame update
     void Start()
@@ -40,6 +51,7 @@ public class GiraffeScript : MonoBehaviour
         // get components
         playerRb = GetComponent<Rigidbody>();
         playerAudio = GetComponent<AudioSource>();
+        playerMesh = GetComponent<MeshCollider>();
 
         // Gravity
         Physics.gravity = new Vector3(0, -19.62f, 0);
@@ -48,8 +60,32 @@ public class GiraffeScript : MonoBehaviour
         Score = 0;
 
         startTextX = startText.transform.position.x;
+        highScoreTextX = highScoreText.transform.position.x;
+
+        // changing all highscore texts to current highscore
+        for (int i = 0; i < highScoreTexts.Count; i++)
+        {
+            highScoreTexts[i].text = $"High Score: {SaveHighScore.highScore}";
+        }
+
+        giraffeMaterial.SetColor("_EmissionColor", Color.black);
+
     }
 
+    // powerup countdown
+    IEnumerator powerupCountdownRoutine()
+    {
+        giraffeMaterial.SetColor("_EmissionColor", new Color(0f, 96f, 138f));
+
+
+        yield return new WaitForSeconds(10);
+
+        giraffeMaterial.SetColor("_EmissionColor", Color.black);
+
+        hasPowerup = false;
+        
+
+    }
     // Update is called once per frame
     void Update()
     {
@@ -93,6 +129,17 @@ public class GiraffeScript : MonoBehaviour
                 transform.rotation = Quaternion.LookRotation(Vector3.left);
                 firstMove = true;
             }
+
+            
+            
+        }
+       
+
+        // saving high score to static class
+        if (gameOver == true && (Score > SaveHighScore.highScore))
+        {
+            highScore = Score;
+            SaveHighScore.highScore = Score;
         }
         
         if (transform.position.y < -3)
@@ -111,7 +158,15 @@ public class GiraffeScript : MonoBehaviour
             startTextX = startTextX + startTextSpeedUp;
             startTextSpeedUp = startTextSpeedUp + 0.02f;
             startText.transform.position = new Vector3 (startTextX, startText.transform.position.y, startText.transform.position.z);
+
+          
             keyboard.transform.position = new Vector3 (keyboard.transform.position.x, keyboard.transform.position.y - 0.05f, keyboard.transform.position.z);    
+        }
+        if (firstMove && highScoreText != null)
+        {
+            highScoreTextX = highScoreTextX + startTextSpeedUp;
+            startTextSpeedUp = startTextSpeedUp + 0.02f;
+            highScoreText.transform.position = new Vector3(highScoreTextX, highScoreText.transform.position.y, highScoreText.transform.position.z);
         }
     }
 
@@ -161,7 +216,7 @@ public class GiraffeScript : MonoBehaviour
     {
 
         // game over for car death
-        if (collision.gameObject.CompareTag("Obstacle"))
+        if (collision.gameObject.CompareTag("Obstacle") && !hasPowerup)
         {
             
             gameOver = true;
@@ -202,6 +257,15 @@ public class GiraffeScript : MonoBehaviour
             waterSplash.Play();
             playerAudio.PlayOneShot(waterDeathSound, 1);
         }
+
+        // collect powerup
+        if (collision.CompareTag("Powerup"))
+        {
+            Destroy(collision.gameObject);
+            hasPowerup = true;
+      
+            StartCoroutine(powerupCountdownRoutine());
+        }
     }
 
     // player leaves collision
@@ -216,5 +280,15 @@ public class GiraffeScript : MonoBehaviour
         }
         
     }
+
+}
+
+
+// static class to keep high score through restarts
+static class SaveHighScore
+{
+    public static float highScore = 0;
+
+
 
 }

@@ -15,6 +15,7 @@ public class ObstacleMove : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // move obstacles
         transform.Translate(Vector3.right * speed * Time.deltaTime);
 
         if (transform.position.x > 25)

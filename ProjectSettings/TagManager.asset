@@ -9,6 +9,7 @@ TagManager:
   - WaterObstacle
   - Log
   - Tree
+  - Powerup
   layers:
   - Default
   - TransparentFX
